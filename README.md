@@ -6,6 +6,8 @@
 
 ## Was ist neu?
 
+Version 2.0.1: englisches Dashboard, kurze Texte, Desktop-Links, mobile Seitenauswahl und Browser-Historie.
+
 | Bereich | Möglichkeiten |
 |---|---|
 | Fotos | Lauter, Leiser oder abwechselnd; manueller Test; GPIO- und Intervallmodus |

@@ -1,6 +1,8 @@
-# Prüfstand · Version 2.0.0 · 10.11.2026
+# Prüfstand · Version 2.0.1 · 10.11.2026
 
 ## Erfolgreich geprüft
+
+Version 2.0.1: englische Oberfläche und Gerätemeldungen, kurze Texte, keine Eyebrows. Navigation als Desktop-Links und mobile Seitenauswahl; Direktlinks und Browser-Zurück im Browsertest geprüft.
 
 - Firmware für klassisches ESP32 DevKit/WROOM-32, espressif32 6.10.0 / Arduino-ESP32 2.0.17 gebaut. Zwei OTA-Partitionen mit jeweils 1.875 MiB; Anwendung passt mit Reserve.
 - Nativer C++-Test des Eingangsfilters: Entprellung, gehaltenes Signal, Start bei aktivem Pegel, erneute Flanke und Millisekundenüberlauf.
