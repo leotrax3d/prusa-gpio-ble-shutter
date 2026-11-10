@@ -6,7 +6,7 @@
 
 ## Was ist neu?
 
-Version 2.0.1: englisches Dashboard, kurze Texte, Desktop-Links, mobile Seitenauswahl und Browser-Historie.
+Version 2.0.2: weniger Arbeit bei Statusabfragen, fester Logpuffer, Log-Deltas und adaptiver Steuerungstask. Dazu ein optionaler Ready-Taster am ESP32. [Performance-Nachweise](docs/performance.md) · [Ready-Taster anschließen](docs/ready-button.md)
 
 | Bereich | Möglichkeiten |
 |---|---|
@@ -15,9 +15,10 @@ Version 2.0.1: englisches Dashboard, kurze Texte, Desktop-Links, mobile Seitenau
 | Grenzen | Mindestabstand, Tastendauer, Sitzungsgrenze, zeitgesteuerter Stopp |
 | Eingang | GPIO-Auswahl, HIGH/LOW-Auslösung, Entprellung, interner Pull-up, Verhalten bei BLE-Ausfall |
 | G-Code-Konfigurator | Kamera/Servo anklicken, Servo-Winkel und Ereignisse wählen, Start-/Schicht-/End-Code kopieren oder herunterladen |
+| Ready-Taster | GPIO32 gegen GND, Open-Drain-Ausgang GPIO25 → IN4, USB-Makro `M1200`, Entprellung und Sperrzeit |
 | Servo | 180°/270°-Zuordnung, PWM-Pulsgrenzen, Signaländerungsrate, manuelle Positionen, acht gespeicherte Aktionen |
 | Verbindungen | Eigenes WPA2-WLAN, zusätzlich Router-WLAN, mDNS, eigene Geräte-/Bluetooth-Namen und Passwörter |
-| Diagnose | HID-Bereitschaft, Eingangspegel, Zähler, Heap/Flash/WLAN, 48 Ereignisse, Diagnose-Export |
+| Diagnose | HID-Bereitschaft, Eingangspegel, Zähler, Heap/Flash/WLAN, 48 Ereignisse mit inkrementellem Abruf, Diagnose-Export |
 | Verwaltung | Foto-Einstellungen importieren/exportieren, Kopplungen löschen, Foto-Reset, Neustart, authentifiziertes WLAN-Update |
 | Oberfläche | Schlichtes HTML, wenig CSS, Lucide-SVGs, Orange/Schwarz/Weiß, Mobil/Desktop, Hell/Dunkel |
 | Installation | Einfache HTML-Flashseite mit ESP Web Tools, passendem ESP32-Image und Prüfsummen |
@@ -125,7 +126,7 @@ Der Generator erzeugt dieses Protokoll automatisch. OUT6 nicht gleichzeitig ande
 
 ## Verhalten und Architektur
 
-Die Aufnahme-Engine und Servo-Auswertung laufen in einem eigenen FreeRTOS-Task. HTTP-Antworten und NVS-Schreibvorgänge werden außerhalb des Engine-Mutex ausgeführt; kurze Konfigurationswechsel sind synchronisiert. Tastenfreigabe wartet nicht auf einen `delay()` im Webserver. BLE-/Flash-Operationen und das ESP32-Betriebssystem erlauben trotzdem keine harte Echtzeitgarantie.
+Die Aufnahme-Engine, Servo-Auswertung und der Ready-Taster laufen in einem eigenen FreeRTOS-Task. Statuswerte werden unter dem Mutex nur kopiert; JSON entsteht danach. Ein fester Log-Ring verhindert dynamische Logtexte im schnellen Task. Der Task läuft aktiv mit 2 ms und im Leerlauf mit 10 ms Periode. HTTP-Antworten und NVS-Schreibvorgänge werden außerhalb des Engine-Mutex ausgeführt; kurze Konfigurationswechsel sind synchronisiert. Tastenfreigabe wartet nicht auf einen `delay()` im Webserver. BLE-/Flash-Operationen und das ESP32-Betriebssystem erlauben trotzdem keine harte Echtzeitgarantie.
 
 - BLE-Bereitschaft bedeutet Verbindung, erfolgreiche Verschlüsselung und aktivierte HID-Notifications. Das bestätigt keine Bereitschaft der Kamera-App.
 - Jede n-te Aufnahme bedeutet Impuls 1, n+1, 2n+1 …; Neustart einer Sitzung beginnt neu zu zählen.
@@ -133,9 +134,9 @@ Die Aufnahme-Engine und Servo-Auswertung laufen in einem eigenen FreeRTOS-Task. 
 - Bei BLE-Trennung wird eine ausstehende Serie verworfen. Standardmäßig wird zusätzlich die Aufnahme deaktiviert. Wird dieses Verhalten ausgeschaltet, bleibt das Programm aktiv, puffert aber keine Fotos.
 - Neustart deaktiviert Aufnahme und Servo. Es gibt bewusst keine gespeicherte automatische Freigabe.
 - Start bei bereits aktivem Eingang erzeugt kein Foto: erst stabiler Ruhepegel, dann aktive Flanke.
-- Sitzungs-/Gesamtzähler und die letzten 48 Ereignisse liegen im RAM und werden beim Neustart gelöscht. Konfiguration liegt im NVS.
+- Sitzungs-/Gesamtzähler und die letzten 48 Ereignisse mit inkrementellem Abruf liegen im RAM und werden beim Neustart gelöscht. Konfiguration liegt im NVS.
 - „Gesendet“ zählt Notification-Versuche. „Gefiltert“ zählt durch jeden-n-ten-Impuls ausgelassene Signale; Impulszählung erfolgt im aktiven GPIO-Aufnahmemodus.
-- Bei Verwendung beider Geräte betrifft „Aufnahme stoppen“ nur Fotos; **Alles stoppen** beendet auch Servo-PWM.
+- Bei Verwendung beider Geräte betrifft „Aufnahme stoppen“ nur Fotos; **Alles stoppen** beendet auch Servo-PWM und Ready-Impulse; ein bereits gesetzter Ready-Zustand des Druckers wird dadurch nicht gelöscht.
 
 ## Netzwerk, Passwort und Updates
 
@@ -152,11 +153,14 @@ Foto-JSON-Export enthält keine Netzwerkgeheimnisse oder Servo-Kalibrierung. Die
 ```sh
 g++ -std=c++11 -Iinclude test/trigger.cpp -o /tmp/trigger-test && /tmp/trigger-test
 g++ -std=c++11 -Iinclude test/engine.cpp -o /tmp/engine-test && /tmp/engine-test
+g++ -std=c++11 -Iinclude test/log.cpp -o /tmp/log-test && /tmp/log-test
+g++ -std=c++11 -Iinclude test/ready.cpp -o /tmp/ready-test && /tmp/ready-test
 pio run
 python scripts/package_firmware.py
 pip install playwright==1.56.0
 python -m playwright install chromium
 python test/browser.py
+python test/polling.py
 ```
 
 [Prüfprotokoll](docs/validation.md). C++-Tests prüfen den tatsächlichen Aufnahme-Scheduler und den Servo-Protokolldecoder. Browserprüfungen simulieren Geräteantworten und das Installer-Element, prüfen also keine echte ESP32-HTTP-/BLE-/USB-Kommunikation. **Hardwaretests mit CORE One, ESP32, Smartphone und Servo stehen aus.** Vor einem langen Druck: Pegel prüfen, zehn Fotoimpulse testen, BLE trennen/neu verbinden, Neustartverhalten prüfen und Servo-Aktionen ohne Mechanik kontrollieren.

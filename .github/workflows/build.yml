@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -18,9 +21,12 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - run: g++ -std=c++11 -Iinclude test/trigger.cpp -o /tmp/trigger-test && /tmp/trigger-test
       - run: g++ -std=c++11 -Iinclude test/engine.cpp -o /tmp/engine-test && /tmp/engine-test
+      - run: g++ -std=c++11 -Iinclude test/log.cpp -o /tmp/log-test && /tmp/log-test
+      - run: g++ -std=c++11 -Iinclude test/ready.cpp -o /tmp/ready-test && /tmp/ready-test
       - run: pio run
       - run: python scripts/package_firmware.py
       - run: python test/browser.py
+      - run: python test/polling.py
       - uses: actions/upload-artifact@v4
         with:
           name: prusa-shutter-esp32-v2

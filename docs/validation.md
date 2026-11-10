@@ -1,6 +1,8 @@
-# Prüfstand · Version 2.0.1 · 10.11.2026
+# Prüfstand · Version 2.0.2 · 10.11.2026
 
 ## Erfolgreich geprüft
+
+Version 2.0.2: [Performance-Prüfung](performance.md) mit Request-Zählung, Log-Deltas, DOM-Wiederverwendung und Tab-Pause. Native Tests für den festen Logpuffer und Ready-Taster ergänzt. Die Ready-Oberfläche einschließlich Makro-Download wurde mit simulierten API-Antworten geprüft. Physische Ready-Impulse, Makroausführung und Prusa-Connect-Warteschlange wurden nicht am Gerät getestet.
 
 Version 2.0.1: englische Oberfläche und Gerätemeldungen, kurze Texte, keine Eyebrows. Navigation als Desktop-Links und mobile Seitenauswahl; Direktlinks und Browser-Zurück im Browsertest geprüft.
 
@@ -8,7 +10,7 @@ Version 2.0.1: englische Oberfläche und Gerätemeldungen, kurze Texte, keine Ey
 - Nativer C++-Test des Eingangsfilters: Entprellung, gehaltenes Signal, Start bei aktivem Pegel, erneute Flanke und Millisekundenüberlauf.
 - Nativer C++-Test der tatsächlichen Aufnahme-Engine: Einzelaufnahme/Freigabe, begrenzte Serie, Mindestabstand, Countdown, Intervall, zeitgesteuerter Stopp, jeder n-te Impuls, BLE-Ausfall, verworfene Aufträge, konfigurierbares Deaktivieren und Überlauf.
 - Nativer C++-Test des Servo-Protokolls: gültiger Slot, keine Wiederholung, Unterdrückung von Start-HIGH, ungültigen/zu langen Pulsen und Millisekundenüberlauf.
-- Browserprüfung in Chromium bei 390 und 1440 Pixel Breite: alle acht Dashboard-Bereiche ohne horizontales Überlaufen, Status, Testfoto, Vorlagen, Einstellungs-POST, visueller Servo-Aktionsplan, G-Code für konkrete Schicht, separate Kamera-Auswahl, manuelle Servo-Kommandos, Hell/Dunkel und sichere Darstellung von Logtext.
+- Browserprüfung in Chromium bei 390 und 1440 Pixel Breite: alle neun Dashboard-Bereiche ohne horizontales Überlaufen, Status, Testfoto, Vorlagen, Einstellungs-POST, visueller Servo-Aktionsplan, G-Code für konkrete Schicht, separate Kamera-Auswahl, manuelle Servo-Kommandos, Hell/Dunkel und sichere Darstellung von Logtext.
 - Installer-Zustände bereit/nicht unterstützter Browser mit simuliertem Custom Element geprüft.
 - Zusätzlich den **echten lokal mitgelieferten ESP-Web-Tools-Build 10.1.0** geladen: Custom Element registriert, Installationsbutton freigegeben, keine JavaScript-Fehler. USB-Verbindung wurde nicht angefordert.
 - Firmware-Paketierung prüft ESP32-App-Kennung und Partitionsgröße; USB-Gesamtimage, OTA-App, Manifest und SHA-256-Prüfsummen erzeugt.

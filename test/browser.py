@@ -2,11 +2,8 @@
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 import copy,json,threading,http.server,functools,os,shutil
+from fixtures import config,servo,network,status
 root=Path(__file__).resolve().parents[1]
-config=dict(schema=2,mode=0,key=0,pin=27,activeHigh=True,pullup=True,disarmOnDisconnect=True,debounce=30,cooldown=1000,hold=80,delay=0,every=1,burst=1,burstGap=1200,interval=5000,startDelay=3000,maxFrames=0,autoStop=0)
-servo=dict(pin=26,degrees=270,minUs=1000,maxUs=2000,stepUs=10,commandPin=33,automation=False,rules=[])
-network=dict(ap='Prusa-Shutter',ssid='',hostname='prusa-shutter',bleName='Prusa Shutter',channel=1)
-status=dict(version='2.0.1',connected=True,ready=True,armed=False,pending=False,held=False,level=0,pin=27,sent=0,session=0,pulses=0,skipped=0,filtered=0,remaining=0,mode=0,nextMs=0,uptime=30,freeHeap=120000,minHeap=110000,flashSize=4194304,appSize=1700000,otaSpace=1966080,wifiConnected=False,ip='',apIP='192.168.4.1',clients=1,rssi=0,bonds=1,resetReason=1,rebootRequired=False,servo=dict(enabled=False,targetUs=0,currentUs=0))
 def navigate(page,name):
  if page.viewport_size['width']<=650:page.locator('#pageSelect').select_option(name)
  else:page.locator(f'nav [data-tab={name}]').click()
@@ -23,23 +20,25 @@ try:
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium'),headless=True,args=['--no-sandbox'])
   for width in [390,1440]:
-   c=copy.deepcopy(config);sv=copy.deepcopy(servo);s=copy.deepcopy(status);posts=[];errors=[]
+   c=copy.deepcopy(config);sv=copy.deepcopy(servo);s=copy.deepcopy(status);posts=[];errors=[];rc=dict(configured=False,input=32,output=25,debounce=30,pulse=1000,cooldown=2000)
    page=browser.new_page(viewport={'width':width,'height':900})
    page.on('pageerror',lambda e:errors.append(str(e)))
    def api(route):
-    path=route.request.url.split('/api/')[1]
+    path=route.request.url.split('/api/')[1].split('?')[0]
     if route.request.method=='POST':
      assert route.request.headers.get('x-shutter')=='1'
      d=route.request.post_data_json;posts.append((path,d))
      if path=='config':c.update(d);s['mode']=c['mode'];s['armed']=False
      elif path=='servo/config':sv.update(d);s['servo']['enabled']=False
+     elif path=='ready/config':rc.update(d);rc['configured']=True;s['readyButton']['configured']=True;s['readyButton']['enabled']=False
+     elif path=='ready/action':s['readyButton']['enabled']=d['action']=='enable'
      elif path=='action':
       if d['action']=='start':s['armed']=True
       if d['action']=='stop':s['armed']=False
       if d['action']=='test':s['sent']+=1
      elif path=='servo/action':s['servo']['enabled']=d['action']!='disable'
      route.fulfill(json={'message':'OK'});return
-    data={'config':c,'status':s,'network':network,'servo/config':sv,'logs':{'events':[{'ms':1000,'text':'System ready.'},{'ms':2000,'text':'<img src=x onerror=alert(1)>'}]}}
+    data={'config':c,'status':s,'network':network,'servo/config':sv,'ready/config':rc,'logs':{'events':[{'ms':1000,'text':'System ready.'},{'ms':2000,'text':'<img src=x onerror=alert(1)>'}]}}
     route.fulfill(json=data[path])
    page.route('**/api/**',api)
    page.goto(base+'/web/dashboard.html#input')
@@ -66,9 +65,19 @@ try:
    navigate(page,'servo');page.once('dialog',lambda d:d.accept());page.locator('#enableServo').click();page.wait_for_function("document.querySelector('#servoState').textContent.includes('enabled')")
    page.locator('#servoAngle').fill('180');page.locator('#moveServo').click();page.wait_for_timeout(150)
    assert any(path=='servo/action' and d['action']=='move' and d['angle']==180 for path,d in posts)
+   navigate(page,'ready');page.locator('#saveReady').click()
+   page.wait_for_function("document.querySelector('#readyState').textContent.startsWith('Disabled')")
+   page.once('dialog',lambda d:d.accept());page.locator('#enableReady').click()
+   page.wait_for_function("document.querySelector('#readyState').textContent.startsWith('Enabled')")
+   assert any(path=='ready/action' and d['action']=='enable' and d['confirm']=='BESTAETIGEN' for path,d in posts)
+   with page.expect_download() as download_info:page.locator('#downloadReadyMacro').click()
+   download=download_info.value;assert download.suggested_filename=='btn_4.gcode'
+   assert Path(download.path()).read_text()=='M1200\n'
+   page.screenshot(path=str(root/f'docs/ready-{width}.png'),full_page=True)
+   page.locator('#disableReady').click();page.wait_for_function("document.querySelector('#readyState').textContent.startsWith('Disabled')")
    navigate(page,'diagnostics');page.get_by_text('System ready.',exact=True).wait_for();assert page.locator('#logs img').count()==0
    page.locator('#theme').click();assert page.locator('html').get_attribute('data-theme')=='dark';page.locator('#theme').click()
-   for name in ['overview','capture','input','slicer','servo','network','diagnostics','system']:
+   for name in ['overview','capture','input','slicer','servo','ready','network','diagnostics','system']:
     navigate(page,name)
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,name)
    navigate(page,'overview');page.screenshot(path=str(root/f'docs/dashboard-{width}.png'),full_page=True)
