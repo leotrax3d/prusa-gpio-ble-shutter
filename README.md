@@ -1,4 +1,4 @@
-# Prusa Shutter 2 · Capture Studio
+# Prusa Shutter 2
 
 **CORE One + Prusa GPIO Hackerboard + ESP32-WROOM-32**: Bluetooth-Fotoauslöser für Android und iOS mit lokalem Dashboard, visuellem PrusaSlicer-Konfigurator und optionalem 270°-Servo.
 
@@ -17,7 +17,7 @@
 | Verbindungen | Eigenes WPA2-WLAN, zusätzlich Router-WLAN, mDNS, eigene Geräte-/Bluetooth-Namen und Passwörter |
 | Diagnose | HID-Bereitschaft, Eingangspegel, Zähler, Heap/Flash/WLAN, 48 Ereignisse, Diagnose-Export |
 | Verwaltung | Foto-Einstellungen importieren/exportieren, Kopplungen löschen, Foto-Reset, Neustart, authentifiziertes WLAN-Update |
-| Oberfläche | Acht Bereiche, Mobil/Desktop, Hell/Dunkel, ungespeicherte Entwürfe, einstellbare Aktualisierung |
+| Oberfläche | Schlichtes HTML, wenig CSS, Lucide-SVGs, Orange/Schwarz/Weiß, Mobil/Desktop, Hell/Dunkel |
 | Installation | Einfache HTML-Flashseite mit ESP Web Tools, passendem ESP32-Image und Prüfsummen |
 
 Die Firmware sendet Tastenbefehle, keine Kamera-API-Aufträge. Die Kamera-App muss geöffnet sein und Lautstärketasten als Fotoauslöser unterstützen. Ein gesendeter Befehl ist keine Bestätigung für ein gespeichertes Foto.
@@ -171,4 +171,4 @@ CI baut Firmware/Installer und führt C++- und Browsertests aus. GitHub Pages ve
 - [Prusa-Firmware: M262–M268](https://github.com/prusa3d/Prusa-Firmware-Buddy/blob/master/src/marlin_stubs/M262-M268.cpp)
 - [ESP Web Tools](https://esphome.github.io/esp-web-tools/)
 
-Eigenständiges Community-Projekt, nicht von Prusa unterstützt. Eigener Code und Anschlussplan: MIT. Externe Unterlagen/Bibliotheken haben eigene Lizenzen.
+Eigenständiges Community-Projekt, nicht von Prusa unterstützt. Eigener Code und Anschlussplan: MIT. Externe Unterlagen/Bibliotheken haben eigene Lizenzen. Lucide-SVGs 0.468.0: ISC, siehe `web/lucide-LICENSE`. ESP Web Tools und dessen Lizenzen liegen unter `site/vendor/`.

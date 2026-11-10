@@ -55,7 +55,7 @@ try:
    page.locator('#servoAngle').fill('180');page.locator('#moveServo').click();page.wait_for_timeout(150)
    assert any(path=='servo/action' and d['action']=='move' and d['angle']==180 for path,d in posts)
    page.locator('nav [data-tab=diagnostics]').click();page.get_by_text('System bereit.',exact=True).wait_for();assert page.locator('#logs img').count()==0
-   page.locator('#theme').click();assert page.locator('html').get_attribute('data-theme')=='light'
+   page.locator('#theme').click();assert page.locator('html').get_attribute('data-theme')=='dark';page.locator('#theme').click()
    for name in ['overview','capture','input','slicer','servo','network','diagnostics','system']:
     page.locator(f'nav [data-tab={name}]').click()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,name)

@@ -1,0 +1,25 @@
+{
+  "version": "0.468.0",
+  "source": "https://github.com/lucide-icons/lucide",
+  "icons": [
+    "camera",
+    "timer",
+    "plug",
+    "file-code-2",
+    "move-horizontal",
+    "wifi",
+    "activity",
+    "settings",
+    "usb",
+    "download",
+    "copy",
+    "play",
+    "square",
+    "power",
+    "refresh-cw",
+    "sun-moon",
+    "save",
+    "plus",
+    "upload"
+  ]
+}
