@@ -1,103 +1,174 @@
-# Prusa GPIO BLE Shutter
+# Prusa Shutter 2 · Capture Studio
 
-Bluetooth-Fotoauslöser für **Prusa CORE One + GPIO Hackerboard + klassisches ESP32 Dev Board (ESP32-WROOM-32 / DevKit)**. Ein OUT7-Impuls sendet genau einen Lauter- oder Leiser-Tastendruck an ein gekoppeltes Android-Smartphone oder iPhone. Die Kamera-App muss diese Taste als Fotoauslöser unterstützen und geöffnet sein.
+**CORE One + Prusa GPIO Hackerboard + ESP32-WROOM-32**: Bluetooth-Fotoauslöser für Android und iOS mit lokalem Dashboard, visuellem PrusaSlicer-Konfigurator und optionalem 270°-Servo.
 
-![Anschlussplan](docs/wiring.svg)
+![Dashboard](docs/dashboard-1440.png)
 
-## Hardware und Verdrahtung
+## Was ist neu?
 
-Benötigt: ESP32 DevKit mit BLE, Prusa GPIO Hackerboard samt Original-I²C-Kabel, zwei passende Steckleitungen, USB-Netzteil. Diese Firmware ist für das klassische ESP32 DevKit kompiliert. ESP32-S2 hat kein Bluetooth; C3/S3 benötigen eigene Boardkonfiguration und Pinwahl. GPIO27 ist die **GPIO-Nummer**, keine Steckleistenposition und keine pauschale „D27“-Zuordnung.
+| Bereich | Möglichkeiten |
+|---|---|
+| Fotos | Lauter, Leiser oder abwechselnd; manueller Test; GPIO- und Intervallmodus |
+| Aufnahmeprogramme | Jede n-te Schicht, Verzögerung, 1–50 Befehle pro Serie, Serienabstand, Countdown |
+| Grenzen | Mindestabstand, Tastendauer, Sitzungsgrenze, zeitgesteuerter Stopp |
+| Eingang | GPIO-Auswahl, HIGH/LOW-Auslösung, Entprellung, interner Pull-up, Verhalten bei BLE-Ausfall |
+| G-Code-Konfigurator | Kamera/Servo anklicken, Servo-Winkel und Ereignisse wählen, Start-/Schicht-/End-Code kopieren oder herunterladen |
+| Servo | 180°/270°-Zuordnung, PWM-Pulsgrenzen, Signaländerungsrate, manuelle Positionen, acht gespeicherte Aktionen |
+| Verbindungen | Eigenes WPA2-WLAN, zusätzlich Router-WLAN, mDNS, eigene Geräte-/Bluetooth-Namen und Passwörter |
+| Diagnose | HID-Bereitschaft, Eingangspegel, Zähler, Heap/Flash/WLAN, 48 Ereignisse, Diagnose-Export |
+| Verwaltung | Foto-Einstellungen importieren/exportieren, Kopplungen löschen, Foto-Reset, Neustart, authentifiziertes WLAN-Update |
+| Oberfläche | Acht Bereiche, Mobil/Desktop, Hell/Dunkel, ungespeicherte Entwürfe, einstellbare Aktualisierung |
+| Installation | Einfache HTML-Flashseite mit ESP Web Tools, passendem ESP32-Image und Prüfsummen |
 
-1. Drucker ausschalten, abkühlen lassen, ESP32 von USB trennen.
-2. Hackerboard gemäß [Prusa-Anleitung](https://help.prusa3d.com/article/gpio-module_734695) am vorgesehenen I²C-Anschluss des CORE One installieren.
-3. JP7 kann offen bleiben: Die Firmware aktiviert am ESP32 `INPUT_PULLUP`. Eine Lötbrücke ist für diesen Aufbau nicht erforderlich.
-4. OUT7 → ESP32 GPIO27. Optional kann ein 1-kΩ-Serienwiderstand ergänzt werden; er ist für die normale 3,3-V-Verbindung nicht erforderlich. GND → ESP32 GND. Für Rev02 BOM05 ist OUT7 J6/9 und GND J6/10 (alternativ J6/1). Boardbeschriftung und Revision prüfen.
-5. ESP32 separat über USB versorgen. Keine Verbindung zu 3V3, VIN, 5 V oder 24 V des Druckers herstellen. ESP32-Eingänge sind nicht 5-V-tolerant. Leitungen kurz halten und von Motor-/Heizleitungen fernhalten.
+Die Firmware sendet Tastenbefehle, keine Kamera-API-Aufträge. Die Kamera-App muss geöffnet sein und Lautstärketasten als Fotoauslöser unterstützen. Ein gesendeter Befehl ist keine Bestätigung für ein gespeichertes Foto.
 
-Ohne Löten funktioniert der Aufbau nur mit bereits montierten Stiftleisten oder geeigneten zuverlässigen Prüfkontakten. Lose Drähte in Lötlöchern sind ungeeignet.
+## Installation in wenigen Schritten
 
-Die Masse ist gemeinsam; diese Schaltung ist nicht galvanisch getrennt. Ein optionaler Serienwiderstand begrenzt Fehlerströme, ersetzt aber keinen Pegelwandler. Beide Geräte im Betrieb versorgen; Signalleitung bei längerem Betrieb mit nur einer versorgten Platine trennen, um Rückspeisung über Schutzdioden zu vermeiden.
+Die veröffentlichte Flashseite: **https://leotrax3d.github.io/prusa-gpio-ble-shutter/**
 
-## Warum OUT7 und welche Polarität?
+1. Klassisches **ESP32-WROOM-32 / DevKit mit mindestens 4 MB Flash** über USB-Datenkabel an Desktop-Chrome oder Edge anschließen. Drucker-/Servoleitungen zunächst trennen.
+2. Die bereitgestellte Flashseite öffnen und **ESP32 installieren** wählen. Die Website liegt als schlichte HTML-Datei in [`site/index.html`](site/index.html); Hosting benötigt HTTPS, lokal genügt localhost.
+3. Beim ersten Umstieg von Version 1 auf 2 **Gerät löschen / Erase device** wählen: Version 2 verwendet eine neue Partitionstabelle mit zwei OTA-Slots. Einstellungen und BLE-Kopplungen vorher sichern bzw. anschließend neu einrichten.
+4. Nach Installation im ESP-Web-Tools-Dialog **Logs & Console** öffnen, 115200 Baud, Board mit EN/RESET neu starten. Dort stehen WLAN- und Dashboard-Passwort.
+5. WLAN **Prusa-Shutter** verbinden, „kein Internet“ akzeptieren, **http://192.168.4.1** öffnen. Benutzer **admin**, individuell erzeugtes Passwort aus dem seriellen Protokoll.
+6. Smartphone mit **Prusa Shutter** in den Bluetooth-Einstellungen koppeln. Kamera öffnen und Testfoto prüfen. Erst danach Aufnahme aktivieren.
 
-Die Prusa-Hilfeseite enthält widersprüchliche Aussagen zur Ausgangspolarität. Der [Originalschaltplan FDM-MK4-Gpio Rev02 BOM05](https://www.prusa3d.com/downloads/Electronics_drawings/FDM-MK4-Gpio-02-(BOM05).pdf) zeigt: OUT0–3 führen über invertierende MOSFET-Stufen, **OUT4–7 dagegen über 330 Ω direkt zum TCA6408A**. OUT7 wird deshalb hier mit B0 als LOW-Ruhepegel und B1 als HIGH-Auslösepegel verwendet. Der Pull-up ist für definierte Pegel bei hochohmigem Ausgang vorgesehen.
+Android/iOS funktionieren als Kamera und für das Dashboard. Die USB-Installation benötigt einen Desktop-Browser mit Web Serial; Safari/Firefox/iOS eignen sich für diesen Installer nicht. Ein rein lokaler, nicht über localhost/HTTPS geöffneter HTML-Download genügt nicht.
 
-Vor der ersten Nutzung bei deaktiviertem Auslöser prüfen:
-
-```gcode
-M262 P7 B0
-M264 P7 B0
-; im Webinterface GPIO27 LOW / mit Multimeter ungefähr 0 V
-M264 P7 B1
-; im Webinterface GPIO27 HIGH / mit Multimeter ungefähr 3,3 V
-M264 P7 B0
-```
-
-G-Code über eine geeignete Drucker-Konsole oder eine kleine G-Code-Datei auf USB ausführen; jede Stufe einzeln prüfen. Bei anderer Hardware-Revision und umgekehrtem Ergebnis aktive Polarität sowie Ruhe-/Impulswerte im G-Code gemeinsam anpassen. Bei unerwartetem Spannungspegel Verdrahtung prüfen. Keine 24-V-Ausgänge an den ESP32 anschließen.
-
-## Bauen und flashen
-
-[PlatformIO](https://platformio.org/) installieren (z. B. VS Code-Erweiterung):
+### Selbst bauen / lokal flashen
 
 ```sh
+pip install platformio==6.1.18
 pio run
 pio run --target upload
 pio device monitor --baud 115200
+python scripts/package_firmware.py
+python -m http.server 8080 --directory site
 ```
 
-Bei Bedarf Upload-Port mit `--upload-port /dev/ttyUSB0` angeben (Windows z. B. COM3). Zum Flashen die Signalleitung vom Drucker trennen. ESP32 ggf. mit BOOT-Taste in den Downloadmodus bringen. Plattform ist auf `espressif32@6.10.0` fixiert (Arduino-ESP32 2.0.17); keine weiteren Firmware-Bibliotheken erforderlich. Die große App-Partition lässt keinen Platz für OTA; Upload erfolgt per USB.
+Dann `http://localhost:8080` auf dem Rechner mit angeschlossenem ESP32 öffnen. `package_firmware.py` erzeugt `merged.bin` für USB, `firmware.bin` für OTA, Manifest und SHA-256-Prüfsummen. Die Dateien werden ebenfalls als GitHub-Actions-Artefakt gebaut. Die Flashseite enthält keine Benutzerpasswörter.
 
-## Einrichten
+Plattform fixiert: espressif32 6.10.0 / Arduino-ESP32 2.0.17, ArduinoJson 7.3.1. `scripts/embed.py` komprimiert das Dashboard beim Build in PROGMEM; kein Dateisystem-Upload nötig. Firmware ist ausschließlich für das klassische ESP32 gebaut. C3/S3 benötigen eigene Builds; S2 hat kein Bluetooth.
 
-1. Serienmonitor öffnen, ESP32 neu starten. Das pro Gerät erzeugte 16-stellige WLAN-Passwort wird ausgegeben. Es wird lokal im NVS gespeichert und ist nicht im Repository enthalten.
-2. Mit WLAN **Prusa-Shutter** verbinden, Hinweis „kein Internet“ akzeptieren. `http://192.168.4.1` öffnen. Benutzer **admin**, Passwort wie WLAN. HTTP bleibt auf das eigene WPA2-WLAN beschränkt; kein Router-/Cloudzugang wird eingerichtet.
-3. In den Bluetooth-Einstellungen des Smartphones **Prusa Shutter** koppeln. Das Gerät nutzt BLE HID mit Bonding. Das erstmalige Pairing hat keine PIN-Bestätigung (Just Works); in eigener Nähe koppeln. Nach Trennung wird wieder geworben.
-4. Kamera-App öffnen. Android: Lautstärketastenfunktion „Foto aufnehmen“ wählen. Unter iOS mit der gewählten Kamera-App prüfen. Lauter oder Leiser im Webinterface auswählen, speichern, **Testfoto** drücken.
-5. G-Code-Pegeltest durchführen, danach Eingang aktivieren. Nach Aktivierung muss der Eingang erst einen stabilen Ruhepegel sehen, bevor ein Impuls auslösen kann.
+## Ohne Löten: Fotoanschluss
 
-Das Smartphone kann Bluetooth und WLAN gleichzeitig nutzen; WLAN ist nach Einrichtung nicht für den Druckbetrieb nötig. Passwortänderung/kompletter Reset über vollständiges Flash-Löschen (`pio run --target erase`) und erneutes Flashen. Das löscht Einstellungen und BLE-Bonds; Smartphone-Eintrag danach ebenfalls vergessen und neu koppeln. Das WLAN-Passwort wird über USB ausgegeben: Serienprotokolle nicht öffentlich teilen.
+![Fotoanschluss](docs/wiring.svg)
 
-## PrusaSlicer
+| Hackerboard | ESP32 |
+|---|---|
+| OUT7 | GPIO27 (Standard) |
+| GND | GND |
 
-Unter Drucker → Benutzerdefinierter G-Code die Dateien aus [gcode/](gcode/) ergänzen; vorhandenen Drucker-Code beibehalten:
+ESP32 separat per USB versorgen. **JP7 darf offen bleiben**, die Firmware nutzt `INPUT_PULLUP`. Ein zusätzlicher 1-kΩ-Serienwiderstand ist optional, für die normale 3,3-V-Verbindung nicht erforderlich. Ohne Löten braucht man montierte Stiftleisten oder zuverlässige passende Prüfkontakte. Lose Drähte in Lötlöchern sind ungeeignet.
 
-- `start.gcode`: ans Ende des Start-Codes.
-- `after-layer-change.gcode`: ans Ende von „Nach dem Schichtwechsel“.
-- `end.gcode`: End-Code, ggf. auch Abbruch-Code.
+Zum Verkabeln beide Geräte ausschalten. Keine Verbindung zwischen 3V3 / 5V / VIN der Platinen herstellen; GPIOs sind nicht 5-V-tolerant. Der Aufbau hat gemeinsame Masse und ist nicht galvanisch getrennt. Bei längerer einseitiger Versorgung die Signalleitung trennen, um Rückspeisung über Schutzdioden zu vermeiden.
 
-Die Beispiele enthalten bewusst keine Parkbewegung. Es entstehen Fotos an der jeweiligen Schichtwechselposition; für einen festen Bildausschnitt ist ein separat geprüftes Park-/Retraktionskonzept erforderlich. Der Impuls dauert 150 ms, Entprellung standardmäßig 30 ms. Bei Entprellung ≥150 ms muss der Impuls verlängert werden. Mindestabstand standardmäßig 1000 ms; schnellere Schichten werden übersprungen. Kameraaufnahmezeit und Wartezeit im G-Code auf das Telefon abstimmen. Es gibt keine Rückmeldung vom Telefon, ob ein Foto gespeichert wurde.
+Der [Originalschaltplan Rev02 BOM05](https://www.prusa3d.com/downloads/Electronics_drawings/FDM-MK4-Gpio-02-(BOM05).pdf) zeigt OUT4–7 direkt über 330 Ω am TCA6408A. OUT0–3 besitzen dagegen invertierende MOSFET-Stufen. Die pauschalen Open-Drain-Aussagen der Hilfeseite sind für OUT7 missverständlich. Standard: **B0 = LOW-Ruhepegel, B1 = HIGH-Auslösung**. Revision und gemessenen Pegel vor dem ersten Druck prüfen. Für Rev02 ist OUT7 J6/9, OUT6 J6/8, GND J6/10 oder J6/1.
 
-## Webinterface und Verhalten
+```gcode
+M264 P7 B0
+M262 P7 B0
+M264 P7 B0 ; Dashboard muss LOW zeigen
+; einzeln pruefen:
+M264 P7 B1 ; Dashboard muss HIGH zeigen
+M264 P7 B0
+```
 
-- Live-Status für BLE, GPIO-Pegel, Aktivierung und Zähler.
-- Testauslösung auch bei deaktiviertem Eingang; BLE-Verbindung und Mindestabstand gelten weiterhin.
-- Lauter/Leiser, aktive Polarität, Entprellung (5–200 ms), Mindestabstand (300–10000 ms), Tastendauer (30–300 ms).
-- Einstellungen bleiben erhalten; Aktivierung und Zähler werden bei Neustart zurückgesetzt. Speichern deaktiviert den Eingang.
-- Ein stabiler Impuls erzeugt maximal einen Tastendruck. Keine Warteschlange: während Trennung oder Sperrzeit verworfene Impulse werden später nicht nachgeholt.
-- „Verbunden“ heißt BLE-Verbindung, nicht nachgewiesene HID-Bereitschaft. „Gesendet“ zählt Notification-Versuche, keine bestätigten Bilder.
-- BLE-Tastenfreigabe erfolgt ohne `delay()`-Wartezeit. Der synchrone Arduino-Webserver kann bei langsamen Clients trotzdem Schleifen verzögern; Webinterface während einer Aufnahme möglichst nicht bedienen.
+Die Ausgabe `M264` bezeichnet den logischen Zustand am Expander. Keinen OUT0–3-Anschluss anstelle von OUT7 verwenden, ohne die elektrische Schaltung anzupassen.
 
-API ist per HTTP Basic Auth geschützt. POST benötigt zusätzlich `X-Shutter: 1` (Schutz gegen einfache fremde Formularaufrufe). Routen: `GET /api/status`, `POST /api/arm` (`armed=0/1`), `POST /api/test`, `POST /api/config` (`activeHigh`, `volumeDown`, `debounce`, `cooldown`, `hold`). POST-Parameter sind form-url-encoded; Werte werden vor Speichern geprüft.
+## Visueller G-Code-Konfigurator
 
-## Validierung
+Im Dashboard **Slicer G-Code** öffnen:
 
-CI baut die Firmware und prüft Entprellung, gehaltene Pegel, Startunterdrückung, erneutes Auslösen und Millisekundenüberlauf des Eingangsfilters:
+1. **Kamera** und/oder **Servo** anklicken.
+2. Foto-Einstellungen unter Aufnahme/Eingang speichern.
+3. Für den Servo bis zu acht Aktionen hinzufügen: Winkel und **Druckstart**, **jede Schicht**, **bestimmter `layer_num`** oder **Druckende** wählen.
+4. **G-Code-Steuerung über OUT6 zulassen**, Befehlseingang wählen, Aktionsplan im ESP32 speichern. Das schaltet das Servo-Signal aus.
+5. Unter Servo die kalibrierten Grenzen prüfen und das Signal ausdrücklich freigeben. Keine Freigabe per G-Code und kein automatischer Start nach Neustart.
+6. Die drei erzeugten Blöcke unter PrusaSlicer → Drucker → Benutzerdefinierter G-Code an das Ende von **Start G-Code**, **Nach dem Schichtwechsel**, **End G-Code** ergänzen. Vorhandene Inhalte beibehalten.
+7. Neu slicen. Nach Änderungen an Winkeln, Aktionsreihenfolge, Polarität oder Timing immer erneut erzeugen und neu slicen.
+
+Der Konfigurator benutzt **gespeicherte** Einstellungen. Nicht gespeicherte Änderungen werden angezeigt und verändern die aktiven G-Code-Blöcke nicht. `layer_num` wird als Slicer-Platzhalter direkt verglichen; gewünschten Index im erzeugten Druck-G-Code prüfen. Schichtbedingungen werden als `{if layer_num == ...}` / `{endif}` ausgegeben.
+
+Keine Parkbewegungen und keine Änderung des Extrusions-/Koordinatenmodus. Der Kopf bleibt an der jeweiligen Schichtwechselposition. Foto-Code wartet konservativ auf Verzögerung, Serie, Kamera und Mindestabstand. Dadurch verlängert sich der Druck. Servo-Aktionen innerhalb desselben Ereignisses werden in Listenreihenfolge ausgeführt, danach folgt der Fotoimpuls.
+
+Die Dateien in [`gcode/`](gcode/) sind fertige Foto-Standardvorlagen. Bei individuellen Einstellungen den Dashboard-Generator verwenden. End-/Abbruch-Code setzt Signale in Ruhe, stoppt aber weder das ESP32-Programm noch garantiert er eine mechanische Servo-Abschaltung. Nach dem Druck im Dashboard stoppen.
+
+## Optionaler Miuzei-Servo, 270°
+
+Zusätzlich zur Fotoverdrahtung:
+
+| Verbindung | Zweck |
+|---|---|
+| ESP32 GPIO26 → Servo-Signalleitung | PWM mit 50 Hz, Standardpin einstellbar |
+| Eigene geeignete Servo-Versorgung → Servo + / GND | Laut Nutzerbild 4,8–6,8 V; ausreichend für Anlauf-/Blockierstrom dimensionieren |
+| Servo-Versorgungs-GND → ESP32-GND | Gemeinsame Signalreferenz |
+| Hackerboard OUT6 → ESP32 GPIO33 | Zusätzlicher G-Code-Befehlseingang, einstellbar |
+
+Servo-Leitungsfarben/Steckerbelegung am konkreten Modell prüfen. Nie einen Servo aus einem Hackerboard- oder ESP32-GPIO speisen; niemals Servo-Versorgung an den Signalpin legen. Ob das konkrete Modell 3,3-V-Signale zuverlässig akzeptiert, muss geprüft werden. Falls nicht, wird zusätzliche Pegelanpassung benötigt. Mit passenden konfektionierten Leitungen/Adaptern ist ein Aufbau ohne Löten möglich.
+
+Standardmäßig **Signal aus**, auch nach Neustart, Kalibrierungsspeicherung oder Firmware-Update. Keine Verbindung zum Drucker ist für manuelle Bewegung nötig. Kalibrierte Pulsgrenzen starten vorsichtig mit 1000–2000 µs; das garantiert nicht den vollen 270°-Weg. Der erweiterte Bereich 500–2500 µs ist eine einstellbare Softwaregrenze, keine Aussage zur Zulässigkeit für dieses Modell. Erst Herstellerangaben und freie Endlagen ohne Mechanik prüfen.
+
+Winkel werden linear auf Pulsbreiten abgebildet; es gibt keine Positionsmessung. Die erste Bewegung nach Freigabe kann direkt zum Ziel springen. Spätere Bewegungen werden über die eingestellte Pulsänderung pro 20 ms angenähert. Der Generator addiert die maximale Signal-Rampenzeit aus Pulsbereich und Schrittweite automatisch zur zusätzlich einstellbaren Beruhigungszeit. Eine tatsächliche Positionsbestätigung gibt es nicht; die zusätzliche Zeit auf die Mechanik abstimmen. „Signal aus“ beendet PWM, trennt aber nicht die Stromversorgung und garantiert keine kraftfreie Mechanik. **Alles stoppen** stoppt Fotoaufnahme und Servo-PWM.
+
+### OUT6-Befehlsprotokoll
+
+Eigenes Protokoll dieser Firmware, keine native Servo-Funktion der Prusa-Firmware:
+
+- Ruhe: OUT6 LOW mindestens 300 ms.
+- Aktion 1–8: OUT6 HIGH für `Aktionsnummer × 200 ms` (200–1600 ms), dann LOW.
+- Empfänger entprellt mit 20 ms und akzeptiert Pulsbreiten mit ±70 ms Toleranz. Ausführung nach 30 ms stabilem LOW.
+- Start bei HIGH, zu lange oder unpassende Pulse lösen keine Aktion aus. Vor dem nächsten Befehl wieder mindestens 300 ms LOW.
+- Ein gültiger Slot führt nur bei aktivierter Automation **und manuell freigegebenem Servo-Signal** zur gespeicherten Zielposition.
+
+Der Generator erzeugt dieses Protokoll automatisch. OUT6 nicht gleichzeitig anderweitig verwenden. Keine bestätigte Übertragung oder Positionsrückmeldung; bei verlorenen/verzögerten Signalen kann eine Aktion ausbleiben. Vor Nutzung im Druck alle Aktionen einzeln prüfen. Der Aktionsplan muss exakt zum geslicten G-Code passen.
+
+## Verhalten und Architektur
+
+Die Aufnahme-Engine und Servo-Auswertung laufen in einem eigenen FreeRTOS-Task. HTTP-Antworten und NVS-Schreibvorgänge werden außerhalb des Engine-Mutex ausgeführt; kurze Konfigurationswechsel sind synchronisiert. Tastenfreigabe wartet nicht auf einen `delay()` im Webserver. BLE-/Flash-Operationen und das ESP32-Betriebssystem erlauben trotzdem keine harte Echtzeitgarantie.
+
+- BLE-Bereitschaft bedeutet Verbindung, erfolgreiche Verschlüsselung und aktivierte HID-Notifications. Das bestätigt keine Bereitschaft der Kamera-App.
+- Jede n-te Aufnahme bedeutet Impuls 1, n+1, 2n+1 …; Neustart einer Sitzung beginnt neu zu zählen.
+- Nur ein ausstehender Auftrag; keine unbegrenzte Warteschlange. Während Trennung oder Sperrzeit verworfene Impulse werden nicht nachgeholt.
+- Bei BLE-Trennung wird eine ausstehende Serie verworfen. Standardmäßig wird zusätzlich die Aufnahme deaktiviert. Wird dieses Verhalten ausgeschaltet, bleibt das Programm aktiv, puffert aber keine Fotos.
+- Neustart deaktiviert Aufnahme und Servo. Es gibt bewusst keine gespeicherte automatische Freigabe.
+- Start bei bereits aktivem Eingang erzeugt kein Foto: erst stabiler Ruhepegel, dann aktive Flanke.
+- Sitzungs-/Gesamtzähler und die letzten 48 Ereignisse liegen im RAM und werden beim Neustart gelöscht. Konfiguration liegt im NVS.
+- „Gesendet“ zählt Notification-Versuche. „Gefiltert“ zählt durch jeden-n-ten-Impuls ausgelassene Signale; Impulszählung erfolgt im aktiven GPIO-Aufnahmemodus.
+- Bei Verwendung beider Geräte betrifft „Aufnahme stoppen“ nur Fotos; **Alles stoppen** beendet auch Servo-PWM.
+
+## Netzwerk, Passwort und Updates
+
+Eigenes WPA2-WLAN bleibt aktiv, optional zusätzlich Router-WLAN. Bei AP+STA folgt der AP dem Router-Kanal. `hostname.local` benötigt mDNS-Unterstützung im Netzwerk; IP-Adresse steht im Dashboard und seriellen Status. Maximal vier AP-Clients. Keine Portfreigabe oder Cloud-Anbindung nötig.
+
+Beim ersten Start erzeugt der ESP32 ein individuelles Passwort. WLAN- und Admin-Passwort lassen sich später unabhängig ändern; Änderungen gelten erst nach Neustart. Passwortfelder liefern gespeicherte Geheimnisse niemals an den Browser zurück. Lokale HTTP-Basic-Authentifizierung schützt API und Dashboard, `X-Shutter: 1` schützt POST-Routen gegen einfache fremde Formularaufrufe. Die HTTP-Verbindung selbst ist nicht TLS-verschlüsselt; nur in vertrauenswürdigem Netz verwenden, keine Internet-Portfreigabe einrichten. BLE verwendet Bonding mit Just Works; beim ersten Koppeln gibt es keine PIN-Prüfung.
+
+OTA über System → **firmware.bin** auswählen. Upload benötigt Authentifizierung und POST-Header, stoppt Aufnahme/Servo und prüft ESP32-App-Header. `merged.bin`/Bootloader-Dateien werden abgelehnt. Firmware ist nicht kryptografisch signiert; nur vertrauenswürdige Projekt-Releases installieren. Für Version 1 → 2 ist USB wegen neuer Partitionierung erforderlich. Ein fehlgeschlagenes Update startet nicht automatisch neu; Fehleranzeige prüfen. Bei erfolgreichem Update erfolgt Neustart.
+
+Foto-JSON-Export enthält keine Netzwerkgeheimnisse oder Servo-Kalibrierung. Die Diagnose enthält lokale IP und Ereignisse; vor Weitergabe prüfen. Vollständiges Löschen mit `pio run --target erase` entfernt Konfiguration und Kopplungen; danach neu flashen und alten Smartphone-Eintrag vergessen.
+
+## Tests und Stand
 
 ```sh
-g++ -std=c++11 -Iinclude test/trigger.cpp -o /tmp/trigger-test
-/tmp/trigger-test
+g++ -std=c++11 -Iinclude test/trigger.cpp -o /tmp/trigger-test && /tmp/trigger-test
+g++ -std=c++11 -Iinclude test/engine.cpp -o /tmp/engine-test && /tmp/engine-test
 pio run
+python scripts/package_firmware.py
+pip install playwright==1.56.0
+python -m playwright install chromium
+python test/browser.py
 ```
 
-Ein realer Test mit CORE One, ESP32 und Smartphone ist zusätzlich erforderlich. Vor einem langen Druck: zehn Impulse prüfen, BLE trennen/wiederverbinden, ESP32 neu starten (Eingang muss deaktiviert bleiben), Lauter/Leiser separat prüfen und kontrollieren, dass jedes Mal genau ein Foto entsteht.
+[Prüfprotokoll](docs/validation.md). C++-Tests prüfen den tatsächlichen Aufnahme-Scheduler und den Servo-Protokolldecoder. Browserprüfungen simulieren Geräteantworten und das Installer-Element, prüfen also keine echte ESP32-HTTP-/BLE-/USB-Kommunikation. **Hardwaretests mit CORE One, ESP32, Smartphone und Servo stehen aus.** Vor einem langen Druck: Pegel prüfen, zehn Fotoimpulse testen, BLE trennen/neu verbinden, Neustartverhalten prüfen und Servo-Aktionen ohne Mechanik kontrollieren.
+
+CI baut Firmware/Installer und führt C++- und Browsertests aus. GitHub Pages veröffentlicht den eingecheckten Installer inklusive Firmware-Dateien aus **main / (root)**. Die Startseite leitet nach `site/` weiter. Für ein neues Release zuerst die Firmware bauen, `scripts/package_firmware.py` ausführen und die aktualisierten Dateien unter `site/firmware/` mit dem dazugehörigen Quellcode committen. CI stellt zusätzlich ein Firmware-Artefakt bereit.
 
 ## Quellen
 
-Gelesen am 10.11.2026:
-
-- [Prusa GPIO Module – Installation, Grenzwerte, JP7, G-Code](https://help.prusa3d.com/article/gpio-module_734695)
-- [Prusa-Timelapse-Anleitung – Smartphone via BLE-Lautstärketaste](https://blog.prusa3d.com/create_3d_print_timelapses_using_prusa_gpio_hackerboard_117339/)
-- [Prusa Open Source – Originalschaltplan-Verzeichnis](https://www.prusa3d.com/page/open-source-at-prusa-research_236812/)
+- [Prusa GPIO Module](https://help.prusa3d.com/article/gpio-module_734695)
+- [Prusa Timelapse mit ESP32/Bluetooth](https://blog.prusa3d.com/create_3d_print_timelapses_using_prusa_gpio_hackerboard_117339/)
 - [Originalschaltplan Rev02 BOM05](https://www.prusa3d.com/downloads/Electronics_drawings/FDM-MK4-Gpio-02-(BOM05).pdf)
+- [Prusa-Firmware: M262–M268](https://github.com/prusa3d/Prusa-Firmware-Buddy/blob/master/src/marlin_stubs/M262-M268.cpp)
+- [ESP Web Tools](https://esphome.github.io/esp-web-tools/)
 
-Eigenständiges Community-Projekt, nicht von Prusa unterstützt. Code und eigener Anschlussplan stehen unter MIT; verlinkte Prusa-Unterlagen haben eigene Lizenzen.
+Eigenständiges Community-Projekt, nicht von Prusa unterstützt. Eigener Code und Anschlussplan: MIT. Externe Unterlagen/Bibliotheken haben eigene Lizenzen.

@@ -1,5 +1,11 @@
-name: Build firmware
-on: [push, pull_request, workflow_dispatch]
+name: Firmware, tests and installer
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -8,13 +14,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install platformio==6.1.18
+      - run: pip install platformio==6.1.18 playwright==1.56.0
+      - run: python -m playwright install --with-deps chromium
       - run: g++ -std=c++11 -Iinclude test/trigger.cpp -o /tmp/trigger-test && /tmp/trigger-test
+      - run: g++ -std=c++11 -Iinclude test/engine.cpp -o /tmp/engine-test && /tmp/engine-test
       - run: pio run
+      - run: python scripts/package_firmware.py
+      - run: python test/browser.py
       - uses: actions/upload-artifact@v4
         with:
-          name: esp32-firmware
+          name: prusa-shutter-esp32-v2
           path: |
-            .pio/build/esp32dev/firmware.bin
-            .pio/build/esp32dev/bootloader.bin
-            .pio/build/esp32dev/partitions.bin
+            site/firmware/
+            .pio/build/esp32dev/firmware.elf

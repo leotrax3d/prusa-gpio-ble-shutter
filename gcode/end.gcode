@@ -1,2 +1,3 @@
-; Auch in End-/Abbruch-Code ergänzen, soweit das Profil diesen anbietet.
+; Im End-/Abbruch-Code ergaenzen.
 M264 P7 B0
+; Aufnahme anschliessend im Dashboard stoppen.
