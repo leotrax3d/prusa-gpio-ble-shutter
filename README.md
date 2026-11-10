@@ -52,8 +52,6 @@ Plattform fixiert: espressif32 6.10.0 / Arduino-ESP32 2.0.17, ArduinoJson 7.3.1.
 
 ## Ohne Löten: Fotoanschluss
 
-![Fotoanschluss](docs/wiring.svg)
-
 | Hackerboard | ESP32 |
 |---|---|
 | OUT7 | GPIO27 (Standard) |
@@ -170,5 +168,7 @@ CI baut Firmware/Installer und führt C++- und Browsertests aus. GitHub Pages ve
 - [Originalschaltplan Rev02 BOM05](https://www.prusa3d.com/downloads/Electronics_drawings/FDM-MK4-Gpio-02-(BOM05).pdf)
 - [Prusa-Firmware: M262–M268](https://github.com/prusa3d/Prusa-Firmware-Buddy/blob/master/src/marlin_stubs/M262-M268.cpp)
 - [ESP Web Tools](https://esphome.github.io/esp-web-tools/)
+
+Gestaltung: native HTML-Elemente, wenig CSS, Orange/Schwarz/Weiß. Icons ausschließlich aus Lucide; keine selbst gezeichneten Grafiken.
 
 Eigenständiges Community-Projekt, nicht von Prusa unterstützt. Eigener Code und Anschlussplan: MIT. Externe Unterlagen/Bibliotheken haben eigene Lizenzen. Lucide-SVGs 0.468.0: ISC, siehe `web/lucide-LICENSE`. ESP Web Tools und dessen Lizenzen liegen unter `site/vendor/`.
