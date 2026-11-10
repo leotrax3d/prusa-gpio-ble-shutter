@@ -6,15 +6,17 @@ Bluetooth-Fotoauslöser für **Prusa CORE One + GPIO Hackerboard + klassisches E
 
 ## Hardware und Verdrahtung
 
-Benötigt: ESP32 DevKit mit BLE, Prusa GPIO Hackerboard samt Original-I²C-Kabel, 1-kΩ-Serienwiderstand, zwei Leitungen, USB-Netzteil. Diese Firmware ist für das klassische ESP32 DevKit kompiliert. ESP32-S2 hat kein Bluetooth; C3/S3 benötigen eigene Boardkonfiguration und Pinwahl. GPIO27 ist die **GPIO-Nummer**, keine Steckleistenposition und keine pauschale „D27“-Zuordnung.
+Benötigt: ESP32 DevKit mit BLE, Prusa GPIO Hackerboard samt Original-I²C-Kabel, zwei passende Steckleitungen, USB-Netzteil. Diese Firmware ist für das klassische ESP32 DevKit kompiliert. ESP32-S2 hat kein Bluetooth; C3/S3 benötigen eigene Boardkonfiguration und Pinwahl. GPIO27 ist die **GPIO-Nummer**, keine Steckleistenposition und keine pauschale „D27“-Zuordnung.
 
 1. Drucker ausschalten, abkühlen lassen, ESP32 von USB trennen.
 2. Hackerboard gemäß [Prusa-Anleitung](https://help.prusa3d.com/article/gpio-module_734695) am vorgesehenen I²C-Anschluss des CORE One installieren.
-3. JP7 am Hackerboard schließen (10-kΩ-Pull-up nach 3,3 V).
-4. OUT7 → 1 kΩ → ESP32 GPIO27. GND → ESP32 GND. Für Rev02 BOM05 ist OUT7 J6/9 und GND J6/10 (alternativ J6/1). Boardbeschriftung und Revision prüfen.
+3. JP7 kann offen bleiben: Die Firmware aktiviert am ESP32 `INPUT_PULLUP`. Eine Lötbrücke ist für diesen Aufbau nicht erforderlich.
+4. OUT7 → ESP32 GPIO27. Optional kann ein 1-kΩ-Serienwiderstand ergänzt werden; er ist für die normale 3,3-V-Verbindung nicht erforderlich. GND → ESP32 GND. Für Rev02 BOM05 ist OUT7 J6/9 und GND J6/10 (alternativ J6/1). Boardbeschriftung und Revision prüfen.
 5. ESP32 separat über USB versorgen. Keine Verbindung zu 3V3, VIN, 5 V oder 24 V des Druckers herstellen. ESP32-Eingänge sind nicht 5-V-tolerant. Leitungen kurz halten und von Motor-/Heizleitungen fernhalten.
 
-Die Masse ist gemeinsam; diese Schaltung ist nicht galvanisch getrennt. Der Serienwiderstand begrenzt Fehlerströme, ersetzt aber keinen Pegelwandler. Beide Geräte im Betrieb versorgen; Signalleitung bei längerem Betrieb mit nur einer versorgten Platine trennen, um Rückspeisung über Schutzdioden zu vermeiden.
+Ohne Löten funktioniert der Aufbau nur mit bereits montierten Stiftleisten oder geeigneten zuverlässigen Prüfkontakten. Lose Drähte in Lötlöchern sind ungeeignet.
+
+Die Masse ist gemeinsam; diese Schaltung ist nicht galvanisch getrennt. Ein optionaler Serienwiderstand begrenzt Fehlerströme, ersetzt aber keinen Pegelwandler. Beide Geräte im Betrieb versorgen; Signalleitung bei längerem Betrieb mit nur einer versorgten Platine trennen, um Rückspeisung über Schutzdioden zu vermeiden.
 
 ## Warum OUT7 und welche Polarität?
 
