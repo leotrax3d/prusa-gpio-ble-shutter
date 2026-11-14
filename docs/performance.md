@@ -1,5 +1,7 @@
 # ESP32 changes · 2.0.2
 
+> Historical notes for 2.0.2. Version 3.0.0 moved to Arduino-ESP32 3.x with NimBLE and removed the servo feature; the servo items below no longer apply.
+
 ## What changed
 
 - **No firmware-image verification per status request.** Arduino-ESP32 2.0.17 implements `ESP.getSketchSize()` using `esp_image_verify()`. The application size, partition size, flash size and reset reason are now read once at startup.

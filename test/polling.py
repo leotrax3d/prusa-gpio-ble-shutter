@@ -3,7 +3,7 @@ import asyncio,copy,json,threading,http.server,functools,os,shutil
 from pathlib import Path
 from urllib.parse import urlparse,parse_qs
 from playwright.async_api import async_playwright
-from fixtures import config,servo,network,status
+from fixtures import config,network,status
 root=Path(__file__).resolve().parents[1]
 class Handler(http.server.SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
@@ -23,7 +23,7 @@ async def main():
      after=int(q.get('after',['0'])[0]);reset=int(q.get('generation',['0'])[0])!=generation or after>cursor
      batch=events if reset else [e for e in events if int(e['id'])>after]
      payloadCounts.append(len(batch));await r.fulfill(json=dict(generation=generation,cursor=str(cursor),reset=reset,events=batch));return
-    data={'status':status,'config':config,'servo/config':servo,'network':network,'ready/config':dict(configured=False,input=32,output=25,debounce=30,pulse=1000,cooldown=2000)}
+    data={'status':status,'config':config,'network':network,'ready/config':dict(configured=False,input=32,output=25,debounce=30,pulse=1000,cooldown=2000)}
     await r.fulfill(json=data[path])
    await page.route('**/api/**',route)
    await page.goto(f'http://127.0.0.1:{server.server_port}/web/dashboard.html')
