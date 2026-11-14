@@ -17,19 +17,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install platformio==6.1.18 playwright==1.56.0
+      - run: pip install platformio==6.2.0 playwright==1.56.0
       - run: python -m playwright install --with-deps chromium
-      - run: g++ -std=c++11 -Iinclude test/trigger.cpp -o /tmp/trigger-test && /tmp/trigger-test
-      - run: g++ -std=c++11 -Iinclude test/engine.cpp -o /tmp/engine-test && /tmp/engine-test
-      - run: g++ -std=c++11 -Iinclude test/log.cpp -o /tmp/log-test && /tmp/log-test
-      - run: g++ -std=c++11 -Iinclude test/ready.cpp -o /tmp/ready-test && /tmp/ready-test
+      - run: g++ -std=c++17 -Iinclude test/trigger.cpp -o /tmp/trigger-test && /tmp/trigger-test
+      - run: g++ -std=c++17 -Iinclude test/engine.cpp -o /tmp/engine-test && /tmp/engine-test
+      - run: g++ -std=c++17 -Iinclude test/log.cpp -o /tmp/log-test && /tmp/log-test
+      - run: g++ -std=c++17 -Iinclude test/ready.cpp -o /tmp/ready-test && /tmp/ready-test
       - run: pio run
       - run: python scripts/package_firmware.py
       - run: python test/browser.py
       - run: python test/polling.py
       - uses: actions/upload-artifact@v4
         with:
-          name: prusa-shutter-esp32-v2
+          name: prusa-shutter-esp32-v3
           path: |
             site/firmware/
             .pio/build/esp32dev/firmware.elf

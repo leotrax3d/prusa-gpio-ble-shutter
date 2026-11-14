@@ -3,7 +3,7 @@
 ; Fuer andere Einstellungen den Generator im Dashboard verwenden.
 M400        ; Bewegungen abwarten
 G4 P150     ; Mechanik beruhigen
-M264 P7 B1  ; Fotoimpuls HIGH
+M264 P6 B1  ; Fotoimpuls HIGH
 G4 P150     ; laenger als Entprellzeit
-M264 P7 B0  ; Ruhepegel LOW
+M264 P6 B0  ; Ruhepegel LOW
 G4 P1580    ; Taste (80), Kamera (500), Mindestabstand (1000)
